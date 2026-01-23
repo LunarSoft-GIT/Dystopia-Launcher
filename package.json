@@ -1,7 +1,7 @@
 {
     "name": "dystopia",
     "preductname": "Dystopia Launcher",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Dystopia modded server launcher",
     "main": "src/app.js",
     "author": "DystopiaNetwork/Riptiaz/Boulldogo/Vexato/Luuxis",
