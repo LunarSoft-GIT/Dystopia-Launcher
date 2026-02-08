@@ -1,8 +1,8 @@
 {
-    "name": "conflictura",
-    "preductname": "Conflictura Launcher",
-    "version": "3.3.5",
-    "description": "Conflictura modded server launcher",
+    "name": "dystopia",
+    "preductname": "Dystopia Launcher",
+    "version": "4.0.0",
+    "description": "Dystopia modded server launcher",
     "main": "src/app.js",
     "author": "DystopiaNetwork/Riptiaz/Boulldogo/Vexato/Luuxis",
     "env": "azuriom",
