@@ -1,12 +1,12 @@
 {
     "name": "dystopia",
     "preductname": "Dystopia Launcher",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "description": "Dystopia modded server launcher",
     "main": "src/app.js",
     "author": "DystopiaNetwork/Riptiaz/Boulldogo/Vexato/Luuxis",
     "env": "azuriom",
-    "settings": "https://dystopia.network/",
+    "settings": "https://dystopia.network",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "build": "node build.js --obf=true --build=platform",
