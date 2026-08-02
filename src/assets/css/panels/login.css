@@ -30,7 +30,6 @@
         opacity: 0;
         transform: translateY(20px) scale(0.98);
     }
-
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -346,7 +345,7 @@
 }
 
 /* ============================================================
-   NUEVOS ESTILOS PARA PESTAÑAS Y PANELES (Fase 1)
+   NUEVOS ESTILOS PARA PESTAÑAS Y PANELES (Fase 1) - MEJORADOS
    ============================================================ */
 
 .tabs {
@@ -355,6 +354,7 @@
     margin: 15px 0 20px 0;
     border-bottom: 2px solid rgba(255, 255, 255, 0.08);
     padding-bottom: 10px;
+    justify-content: center; /* Centra las pestañas horizontalmente */
 }
 
 .tab {
@@ -381,18 +381,29 @@
 
 .panel {
     display: block;
+    /* Asegura que el panel ocupe todo el ancho y los hijos se estiren */
+    width: 100%;
 }
 
 .panel.hidden {
     display: none;
 }
 
+/* ===== Ajustes para el panel de Microsoft ===== */
+#panelMicrosoft {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Estira los hijos para que ocupen todo el ancho */
+    gap: 16px; /* Espaciado entre elementos */
+}
+
 .ms-login-info {
     text-align: center;
-    margin: 15px 0;
+    margin: 0; /* Eliminamos márgenes extra */
     color: rgba(255, 255, 255, 0.6);
     font-size: 14px;
     font-family: 'Poppins', sans-serif;
+    line-height: 1.5;
 }
 
 .ms-login-btn {
@@ -408,6 +419,7 @@
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
     box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+    /* El botón ya está centrado porque ocupa todo el ancho */
 }
 
 .ms-login-btn:hover {

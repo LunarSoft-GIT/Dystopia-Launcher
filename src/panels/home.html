@@ -1,68 +1,213 @@
-<style class="bodyimg"></style>
-<div class="home-content">
-    <aside class="sidebar">
-        <div class="sidebar-top">
-            <div class="player-avatar-wrapper">
-                <div class="player-head"></div>
-                <div class="player-tooltip">
-                    <div class="player-tooltip-role"></div>
-                    <div class="player-monnaie"></div>
-                </div>
-            </div>
-            <div class="player-role"></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <!-- Los estilos de pestañas deben estar en tu CSS principal, pero los dejamos aquí por si acaso -->
+    <style>
+        /* ===== ESTILOS PARA PESTAÑAS Y PANELES (deben estar en tu CSS principal) ===== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0 20px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+        }
+        .tab {
+            padding: 8px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .tab:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .tab.active {
+            color: var(--accent-color, #00bd7a);
+            border-bottom-color: var(--accent-color, #00bd7a);
+        }
+        .panel {
+            display: block;
+        }
+        .panel.hidden {
+            display: none;
+        }
+        .ms-login-info {
+            text-align: center;
+            margin: 15px 0;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+        .ms-login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0078d4;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+        .ms-login-btn:hover {
+            background: #005a9e;
+            transform: translateY(-2px);
+        }
+        .ms-login-btn:active {
+            transform: translateY(0);
+        }
+        #ms-profile-info {
+            margin-top: 15px;
+            text-align: center;
+            color: var(--accent-color, #00bd7a);
+            font-weight: bold;
+            font-family: 'Poppins', sans-serif;
+            display: none;
+        }
+        /* ===== FIN ESTILOS ===== */
+    </style>
+</head>
+<body>
+<div class="login-content">
+    <div class="login-card-main">
+        <!-- Encabezado original -->
+        <div class="login-header">
+            <i class="fas fa-user-circle login-icon"></i>
+            <p class="login-title" id="login-title"></p>
         </div>
-        <div class="sidebar-middle">
-            <div class="play-element">
-                <button class="play-btn" id="play-btn"></button>
-                <div class="download-content">
-                    <div class="text-download" id="text-download"></div>
-                    <progress value="0" max="0" class="progress-bar"></progress>
+
+        <!-- ===== PESTAÑAS ===== -->
+        <div class="tabs">
+            <button class="tab active" id="tabWeb" data-mode="web">Cuenta Web</button>
+            <button class="tab" id="tabMicrosoft" data-mode="microsoft">Cuenta Microsoft</button>
+        </div>
+
+        <!-- ===== PANEL WEB ===== -->
+        <div class="panel" id="panelWeb">
+            <small class="info-login" id="info-login"></small>
+
+            <div class="login-form">
+                <div class="login-input-group">
+                    <label id="username-label"></label>
+                    <input type="text" class="Mail login-input" spellcheck="false" autocomplete="username">
                 </div>
+
+                <div class="login-input-group">
+                    <label id="password-label"></label>
+                    <input type="password" class="Password login-input" spellcheck="false" autocomplete="current-password">
+                </div>
+
+                <div class="login-links">
+                    <a class="password-reset" id="password-reset-link" target="_blank"></a>
+                    <a class="new-user" id="new-user-link" target="_blank"></a>
+                </div>
+
+                <button class="login-btn primary-btn" id="login-btn"></button>
+                <button class="cancel cancel-login" id="cancel-login-btn" style="display: none;"></button>
             </div>
         </div>
-        <div class="sidebar-bottom">
-            <button class="settings-btn icon-settings" id="settings-btn"></button>
+
+        <!-- ===== PANEL MICROSOFT ===== -->
+        <div class="panel hidden" id="panelMicrosoft">
+            <div class="ms-login-info">
+                <i class="fas fa-microsoft" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+                Inicia sesión con tu cuenta de Microsoft para jugar con tu skin y UUID reales.
+            </div>
+            <button class="ms-login-btn" id="ms-login-btn">
+                <i class="fab fa-microsoft"></i> Iniciar sesión con Microsoft
+            </button>
+            <div id="ms-profile-info"></div>
         </div>
-    </aside>
 
-    <main class="main-content">
-        <section class="news-section">
-            <div class="news-list"></div>
-        </section>
-
-        <aside class="info-section">
-            <div class="info-item">
-                <div class="server">
-                    <img class="server-img" />
-                    <div class="server-text">
-                        <div class="name" id="server-name"></div>
-                        <div class="desc" id="server-desc"></div>
-                    </div>
-                    <div class="etat-text">
-                        <div class="text" id="players-connected"></div>
-                        <div class="online off"></div>
-                    </div>
-                </div>
+        <!-- ===== TARJETAS DE 2FA Y VERIFICACIÓN ===== -->
+        <div class="a2f-card" style="display: none;">
+            <div class="login-header">
+                <i class="fas fa-shield-alt login-icon"></i>
+                <p class="login-title" id="a2f-label"></p>
             </div>
-            <div class="info-item ytb-container">
-                <div class="ytb">
-                    <div class="ytb-header">
-                        <div class="header-text">
-                            <div class="title-change" id="video-title"></div>
-                        </div>
-                    </div>
-                    <div class="video">
-                        <div class="youtube-thumbnail">
-                            <img class="thumbnail-img" alt="YouTube Thumbnail" />
-                            <button class="ytb-play-btn" id="play-video-btn"></button>
-                        </div>
-                        <div class="video-credits"></div>
-                        <div class="icon-ytb ytb-btn" id="view-video-btn"></div>
-                    </div>
-                </div>
+            <div class="info-login-2f" id="info-login-2f"></div>
+            <div class="login-input-group">
+                <input type="text" class="a2f login-input" spellcheck="false" placeholder="000000">
             </div>
-        </aside>
+            <button class="login-btn-2f primary-btn" id="a2f-login-btn"></button>
+            <button class="cancel cancel-2f" id="cancel-a2f-btn"></button>
+        </div>
 
-        <div class="advert-banner" id="advert-banner" style="display:none;"></div>
-    </main>
+        <div class="email-verify-card" style="display: none;">
+            <div class="login-header">
+                <i class="fas fa-envelope login-icon"></i>
+                <p class="login-title" id="email-verify-label"></p>
+            </div>
+            <div class="info-login-email" id="info-login-email"></div>
+            <button class="cancel cancel-email" id="cancel-email-btn"></button>
+        </div>
+    </div>
 </div>
+
+<!-- ===== SCRIPT MEJORADO PARA LAS PESTAÑAS ===== -->
+<script>
+    (function() {
+        // Esperamos a que el DOM esté completamente cargado
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTabs);
+        } else {
+            initTabs();
+        }
+
+        function initTabs() {
+            console.log('🔧 Inicializando pestañas de login...');
+
+            const tabWeb = document.getElementById('tabWeb');
+            const tabMicrosoft = document.getElementById('tabMicrosoft');
+            const panelWeb = document.getElementById('panelWeb');
+            const panelMicrosoft = document.getElementById('panelMicrosoft');
+
+            // Verificar que todos los elementos existen
+            if (!tabWeb || !tabMicrosoft || !panelWeb || !panelMicrosoft) {
+                console.error('❌ No se encontraron los elementos de las pestañas.');
+                console.log('tabWeb:', tabWeb);
+                console.log('tabMicrosoft:', tabMicrosoft);
+                console.log('panelWeb:', panelWeb);
+                console.log('panelMicrosoft:', panelMicrosoft);
+                return;
+            }
+
+            function switchTab(mode) {
+                console.log(`🔄 Cambiando a pestaña: ${mode}`);
+                // Actualizar clases de las pestañas
+                tabWeb.classList.toggle('active', mode === 'web');
+                tabMicrosoft.classList.toggle('active', mode === 'microsoft');
+                // Mostrar/ocultar paneles
+                panelWeb.classList.toggle('hidden', mode !== 'web');
+                panelMicrosoft.classList.toggle('hidden', mode !== 'microsoft');
+            }
+
+            // Asignar eventos
+            tabWeb.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchTab('web');
+            });
+
+            tabMicrosoft.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchTab('microsoft');
+            });
+
+            // Iniciar con la pestaña web activa por defecto
+            switchTab('web');
+            console.log('✅ Pestañas inicializadas correctamente.');
+        }
+    })();
+</script>
+</body>
+</html>
