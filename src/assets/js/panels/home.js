@@ -17,10 +17,10 @@ const pkg = require("../package.json");
 const settings_url = pkg.user ? `${pkg.settings}/${pkg.user}` : pkg.settings;
 
 const dataDirectory =
-  process.env.APPDATA ||
-  (process.platform == "darwin"
-    ? `${process.env.HOME}/Library/Application Support`
-    : process.env.HOME);
+    process.env.APPDATA ||
+    (process.platform == "darwin"
+        ? `${process.env.HOME}/Library/Application Support`
+        : process.env.HOME);
 const MONTHS = [
   "janvier",
   "février",
@@ -52,6 +52,9 @@ class Home {
     this.initVideo();
     this.initAdvert();
     this.verifyModsBeforeLaunch();
+
+    // ===== NUEVO: Actualizar UI (role y whitelist) al cargar =====
+    await this.updateUI();
   }
 
   setStaticTexts() {
@@ -59,7 +62,7 @@ class Home {
     document.getElementById("text-download").textContent = t("verification");
     document.getElementById("server-name").textContent = t("offline");
     document.getElementById("server-desc").innerHTML =
-      `<span class="red">${t("closed")}</span>`;
+        `<span class="red">${t("closed")}</span>`;
     document.getElementById("video-title").textContent = t("community_video");
     document.getElementById("play-video-btn").innerHTML = "&#9658;";
     document.getElementById("view-video-btn").textContent = t("view_video");
@@ -70,40 +73,40 @@ class Home {
     if (this.news) {
       if (!this.news.length) {
         this.createNewsBlock(
-          newsContainer,
-          t("no_news_available"),
-          t("news_follow_here"),
+            newsContainer,
+            t("no_news_available"),
+            t("news_follow_here"),
         );
       } else {
         for (const newsItem of this.news) {
           const date = await this.getDate(newsItem.publish_date);
           this.createNewsBlock(
-            newsContainer,
-            newsItem.title,
-            newsItem.content,
-            newsItem.author,
-            date,
-            newsItem.image,
+              newsContainer,
+              newsItem.title,
+              newsItem.content,
+              newsItem.author,
+              date,
+              newsItem.image,
           );
         }
       }
     } else {
       this.createNewsBlock(
-        newsContainer,
-        t("error_contacting_server"),
-        t("error_contacting_server"),
+          newsContainer,
+          t("error_contacting_server"),
+          t("error_contacting_server"),
       );
     }
     this.setServerIcon();
   }
 
   createNewsBlock(
-    container,
-    title,
-    content,
-    author = "",
-    date = {},
-    image = null,
+      container,
+      title,
+      content,
+      author = "",
+      date = {},
+      image = null,
   ) {
     const blockNews = document.createElement("div");
     blockNews.classList.add("news-block", "opacity-1");
@@ -132,9 +135,18 @@ class Home {
     }
   }
 
+  // ===== MODIFICADO: initLaunch ahora maneja descarga manual de mods para Microsoft =====
   async initLaunch() {
     document.querySelector(".play-btn").addEventListener("click", async () => {
       await this.verifyModsBeforeLaunch();
+
+      // ===== NUEVO: Detectar tipo de cuenta y descargar mods manualmente si es Microsoft =====
+      const account = await this.getCurrentAccount();
+      if (account && account.meta && account.meta.type === 'microsoft') {
+        console.log('Cuenta Microsoft detectada. Descargando mods por defecto...');
+        await this.downloadDefaultMods();
+      }
+
       const opts = await this.getLaunchOptions();
       const playBtn = document.querySelector(".play-btn");
       const info = document.querySelector(".text-download");
@@ -145,17 +157,87 @@ class Home {
       launch.Launch(opts);
 
       const launcherSettings = (await this.database.get("1234", "launcher"))
-        .value;
+          .value;
       this.setupLaunchListeners(
-        launch,
-        info,
-        progressBar,
-        playBtn,
-        launcherSettings,
+          launch,
+          info,
+          progressBar,
+          playBtn,
+          launcherSettings,
       );
     });
   }
 
+  // ===== NUEVO: Obtener cuenta actual =====
+  async getCurrentAccount() {
+    const uuid = (await this.database.get("1234", "accounts-selected")).value;
+    if (!uuid) return null;
+    const account = (await this.database.get(uuid.selected, "accounts")).value;
+    return account || null;
+  }
+
+  // ===== NUEVO: Descargar mods por defecto para cuentas Microsoft =====
+  async downloadDefaultMods() {
+    const modsDir = path.join(
+        dataDirectory,
+        process.platform == "darwin"
+            ? this.config.dataDirectory
+            : `.${this.config.dataDirectory}`,
+        "mods",
+    );
+
+    // Crear carpeta mods si no existe
+    if (!fs.existsSync(modsDir)) {
+      fs.mkdirSync(modsDir, { recursive: true });
+    }
+
+    try {
+      // ===== OPCIÓN 1: Desde endpoint público =====
+      const baseUrl = this.getBaseUrl();
+      const defaultModsUrl = `${baseUrl}mods/default`; // Ajusta según tu endpoint
+
+      const response = await fetch(defaultModsUrl);
+      if (!response.ok) {
+        throw new Error(`Error al obtener mods por defecto: ${response.status}`);
+      }
+      const data = await response.json();
+      const modsList = data.mods || [];
+
+      if (modsList.length === 0) {
+        console.warn('No hay mods por defecto disponibles');
+        return;
+      }
+
+      // Descargar cada mod
+      for (const mod of modsList) {
+        const modPath = path.join(modsDir, mod.name);
+        if (fs.existsSync(modPath)) {
+          console.log(`El mod ${mod.name} ya existe, saltando...`);
+          continue;
+        }
+
+        console.log(`Descargando mod: ${mod.name}`);
+        const modResponse = await fetch(mod.url);
+        if (!modResponse.ok) {
+          console.error(`Error al descargar ${mod.name}: ${modResponse.status}`);
+          continue;
+        }
+        const buffer = await modResponse.arrayBuffer();
+        fs.writeFileSync(modPath, Buffer.from(buffer));
+        console.log(`Mod ${mod.name} descargado correctamente`);
+      }
+
+    } catch (error) {
+      console.error('Error al descargar mods por defecto:', error);
+      // Mostrar error en la interfaz (opcional)
+      const info = document.querySelector(".text-download");
+      if (info) {
+        info.textContent = 'Error al descargar mods por defecto';
+      }
+    }
+  }
+
+  // ===== MODIFICADO: getLaunchOptions ahora ignora mods para Microsoft =====
   async getLaunchOptions() {
     const urlpkg = this.getBaseUrl();
     const uuid = (await this.database.get("1234", "accounts-selected")).value;
@@ -165,12 +247,28 @@ class Home {
     const javaArgs = (await this.database.get("1234", "java-args")).value;
     const resolution = (await this.database.get("1234", "screen")).value;
     const launcherSettings = (await this.database.get("1234", "launcher"))
-      .value;
+        .value;
 
     const screen =
-      resolution.screen.width === "<auto>"
-        ? false
-        : { width: resolution.screen.width, height: resolution.screen.height };
+        resolution.screen.width === "<auto>"
+            ? false
+            : { width: resolution.screen.width, height: resolution.screen.height };
+
+    // ===== NUEVO: Detectar si es cuenta Microsoft para ignorar mods =====
+    let ignored = [
+      ...(Array.isArray(this.config.ignored)
+          ? this.config.ignored
+          : Object.values(this.config.ignored)),
+      "launcher_config",
+    ];
+
+    if (account && account.meta && account.meta.type === 'microsoft') {
+      // Para cuentas Microsoft, ignorar la carpeta mods (la descargamos manualmente)
+      if (!ignored.includes('mods')) {
+        ignored.push('mods');
+      }
+      console.log('Cuenta Microsoft: mods ignorados en la descarga automática');
+    }
 
     return {
       url: urlpkg,
@@ -186,14 +284,9 @@ class Home {
         enable: this.config.loader.enable,
       },
       verify: this.config.verify,
-      ignored: [
-        ...(Array.isArray(this.config.ignored)
-          ? this.config.ignored
-          : Object.values(this.config.ignored)),
-        "launcher_config",
-      ],
+      ignored: ignored, // <--- USAMOS LA LISTA MODIFICADA
       intelEnabledMac:
-        process.platform === "darwin" && process.arch === "arm64",
+          process.platform === "darwin" && process.arch === "arm64",
       downloadFileMultiple: 30,
       JVM_ARGS: [],
       GAME_ARGS: [],
@@ -207,43 +300,43 @@ class Home {
 
   getBaseUrl() {
     const baseUrl = settings_url.endsWith("/")
-      ? settings_url
-      : `${settings_url}/`;
+        ? settings_url
+        : `${settings_url}/`;
     return pkg.env === "azuriom"
-      ? `${baseUrl}api/centralcorp/files`
-      : `${baseUrl}data/`;
+        ? `${baseUrl}api/centralcorp/files`
+        : `${baseUrl}data/`;
   }
 
   setupLaunchListeners(launch, info, progressBar, playBtn, launcherSettings) {
     launch.on("extract", (extract) => console.log(extract));
     launch.on("progress", (progress, size) =>
-      this.updateProgressBar(progressBar, info, progress, size, t("download")),
+        this.updateProgressBar(progressBar, info, progress, size, t("download")),
     );
     launch.on("check", (progress, size) =>
-      this.updateProgressBar(
-        progressBar,
-        info,
-        progress,
-        size,
-        t("verification"),
-      ),
+        this.updateProgressBar(
+            progressBar,
+            info,
+            progress,
+            size,
+            t("verification"),
+        ),
     );
     launch.on("estimated", (time) => console.log(this.formatTime(time)));
     launch.on("speed", (speed) =>
-      console.log(`${(speed / 1067008).toFixed(2)} Mb/s`),
+        console.log(`${(speed / 1067008).toFixed(2)} Mb/s`),
     );
     launch.on("patch", (patch) => (info.innerHTML = t("patch_in_progress")));
     launch.on("data", (e) =>
-      this.handleLaunchData(e, info, progressBar, playBtn, launcherSettings),
+        this.handleLaunchData(e, info, progressBar, playBtn, launcherSettings),
     );
     launch.on("close", (code) =>
-      this.handleLaunchClose(
-        code,
-        info,
-        progressBar,
-        playBtn,
-        launcherSettings,
-      ),
+        this.handleLaunchClose(
+            code,
+            info,
+            progressBar,
+            playBtn,
+            launcherSettings,
+        ),
     );
     launch.on("error", (err) => console.log(err));
   }
@@ -307,10 +400,10 @@ class Home {
       const timeout = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `https://api.mcsrvstat.us/3/${encodeURIComponent(address)}`,
-        {
-          signal: controller.signal,
-        },
+          `https://api.mcsrvstat.us/3/${encodeURIComponent(address)}`,
+          {
+            signal: controller.signal,
+          },
       );
 
       clearTimeout(timeout);
@@ -332,8 +425,8 @@ class Home {
         const maxPlayers = data.players?.max;
 
         playersConnected.textContent = maxPlayers
-          ? `${onlinePlayers}/${maxPlayers}`
-          : `${onlinePlayers}`;
+            ? `${onlinePlayers}/${maxPlayers}`
+            : `${onlinePlayers}`;
       } else {
         setOffline();
       }
@@ -369,7 +462,7 @@ class Home {
     const btn = videoContainer.querySelector(".ytb-btn");
 
     btn.addEventListener("click", () =>
-      shell.openExternal(`https://youtube.com/watch?v=${youtubeVideoId}`),
+        shell.openExternal(`https://youtube.com/watch?v=${youtubeVideoId}`),
     );
 
     if (thumbnailImg && playButton) {
@@ -427,24 +520,24 @@ class Home {
 
   async verifyModsBeforeLaunch() {
     const modsDir = path.join(
-      dataDirectory,
-      process.platform == "darwin"
-        ? this.config.dataDirectory
-        : `.${this.config.dataDirectory}`,
-      "mods",
+        dataDirectory,
+        process.platform == "darwin"
+            ? this.config.dataDirectory
+            : `.${this.config.dataDirectory}`,
+        "mods",
     );
     const launcherConfigDir = path.join(
-      dataDirectory,
-      process.platform == "darwin"
-        ? this.config.dataDirectory
-        : `.${this.config.dataDirectory}`,
-      "launcher_config",
+        dataDirectory,
+        process.platform == "darwin"
+            ? this.config.dataDirectory
+            : `.${this.config.dataDirectory}`,
+        "launcher_config",
     );
     const modsConfigFile = path.join(launcherConfigDir, "mods_config.json");
 
     if (!fs.existsSync(modsDir) || !fs.existsSync(modsConfigFile)) {
       console.log(
-        "Mods directory or config not found, skipping mod verification (first launch).",
+          "Mods directory or config not found, skipping mod verification (first launch).",
       );
       return;
     }
@@ -459,20 +552,20 @@ class Home {
 
     for (const mod in modsConfig) {
       const modFiles = fs
-        .readdirSync(modsDir)
-        .filter(
-          (file) =>
-            file.startsWith(mod) &&
-            (file.endsWith(".jar") || file.endsWith(".jar-disable")),
-        );
+          .readdirSync(modsDir)
+          .filter(
+              (file) =>
+                  file.startsWith(mod) &&
+                  (file.endsWith(".jar") || file.endsWith(".jar-disable")),
+          );
       if (modFiles.length > 0) {
         const modFile = modFiles[0];
         const modFilePath = path.join(modsDir, modFile);
         const newModFilePath = modsConfig[mod]
-          ? modFilePath.replace(".jar-disable", ".jar")
-          : modFilePath.endsWith(".jar-disable")
-            ? modFilePath
-            : `${modFilePath}.disable`;
+            ? modFilePath.replace(".jar-disable", ".jar")
+            : modFilePath.endsWith(".jar-disable")
+                ? modFilePath
+                : `${modFilePath}.disable`;
         if (modFilePath !== newModFilePath) {
           fs.renameSync(modFilePath, newModFilePath);
         }
@@ -489,26 +582,43 @@ class Home {
     modsListElement.appendChild(modElement);
   }
 
+  // ===== MODIFICADO: updateRole maneja cuentas Microsoft =====
   updateRole(account) {
     const tooltipRole = document.querySelector(".player-tooltip-role");
     const sidebarRole = document.querySelector(".player-role");
 
-    if (this.config.role && account.user_info.role) {
+    if (this.config.role && account.user_info && account.user_info.role) {
       const roleName = account.user_info.role.name;
       tooltipRole.textContent = roleName;
       sidebarRole.textContent = roleName;
+      tooltipRole.style.display = "";
+      sidebarRole.style.display = "";
     } else {
+      // Para cuentas Microsoft o sin rol, ocultamos
       tooltipRole.style.display = "none";
       sidebarRole.style.display = "none";
     }
   }
 
+  // ===== MODIFICADO: updateWhitelist maneja cuentas Microsoft =====
   updateWhitelist(account) {
     const playBtn = document.querySelector(".play-btn");
+
+    // Si es cuenta Microsoft, permitir jugar (o aplicar regla específica)
+    if (account.meta && account.meta.type === 'microsoft') {
+      playBtn.style.background = "";
+      playBtn.style.pointerEvents = "auto";
+      playBtn.style.boxShadow = "";
+      playBtn.style.opacity = "1";
+      playBtn.title = t("play");
+      return;
+    }
+
+    // Para cuentas web, aplicar whitelist si está activa
     if (
-      this.config.whitelist_activate &&
-      !this.config.whitelist.includes(account.name) &&
-      !this.config.whitelist_roles.includes(account.user_info.role.name)
+        this.config.whitelist_activate &&
+        !this.config.whitelist.includes(account.name) &&
+        !this.config.whitelist_roles.includes(account.user_info?.role?.name)
     ) {
       playBtn.style.background = "#696969";
       playBtn.style.pointerEvents = "none";
@@ -522,6 +632,14 @@ class Home {
       playBtn.style.opacity = "1";
       playBtn.title = t("play");
     }
+  }
+
+  // ===== NUEVO: Actualizar UI (role y whitelist) =====
+  async updateUI() {
+    const account = await this.getCurrentAccount();
+    if (!account) return;
+    this.updateRole(account);
+    this.updateWhitelist(account);
   }
 }
 

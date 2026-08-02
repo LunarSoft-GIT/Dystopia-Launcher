@@ -53,8 +53,15 @@ class Login {
         const uuid = (await this.database.get('1234', 'accounts-selected')).value;
         const account = (await this.database.get(uuid.selected, 'accounts')).value;
 
-        document.querySelector('.player-skin-title').innerHTML = `${t('skin_of')} ${account.name}`;
-        document.querySelector('.skin-renderer-settings').src = `${websiteUrl}skin3d/3d-api/skin-api/${account.name}`;
+        // ===== MODIFICADO: Si la cuenta es Microsoft, mostrar skin desde el sitio oficial o un placeholder =====
+        if (account.meta && account.meta.type === 'microsoft') {
+            // Podemos usar una imagen de skin por defecto o la de la web de Minecraft
+            document.querySelector('.player-skin-title').innerHTML = `${t('skin_of')} ${account.name}`;
+            document.querySelector('.skin-renderer-settings').src = `https://crafatar.com/renders/head/${account.uuid}`;
+        } else {
+            document.querySelector('.player-skin-title').innerHTML = `${t('skin_of')} ${account.name}`;
+            document.querySelector('.skin-renderer-settings').src = `${websiteUrl}skin3d/3d-api/skin-api/${account.name}`;
+        }
     }
 
     async initOthers() {
@@ -68,7 +75,8 @@ class Login {
     }
 
     updateRole(account) {
-        if (this.config.role && account.user_info.role) {
+        // ===== MODIFICADO: Verificar si existe user_info y role =====
+        if (this.config.role && account.user_info && account.user_info.role) {
             const blockRole = document.createElement("div");
             blockRole.innerHTML = `<div>${t('grade')}: ${account.user_info.role.name}</div>`;
             document.querySelector('.player-role').appendChild(blockRole);
@@ -78,7 +86,8 @@ class Login {
     }
 
     updateMoney(account) {
-        if (this.config.money) {
+        // ===== MODIFICADO: Verificar si existe user_info y monnaie =====
+        if (this.config.money && account.user_info && account.user_info.monnaie !== undefined) {
             const blockMonnaie = document.createElement("div");
             blockMonnaie.innerHTML = `<div>${account.user_info.monnaie} pts</div>`;
             document.querySelector('.player-monnaie').appendChild(blockMonnaie);
@@ -89,9 +98,19 @@ class Login {
 
     updateWhitelist(account) {
         const playBtn = document.querySelector(".play-btn");
+        // ===== MODIFICADO: Si es cuenta Microsoft, no aplicar whitelist (o aplicar si se desea) =====
+        if (account.meta && account.meta.type === 'microsoft') {
+            // Por defecto, permitir jugar a usuarios Microsoft (puedes ajustar)
+            playBtn.style.backgroundColor = "#00bd7a";
+            playBtn.style.pointerEvents = "auto";
+            playBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.3)";
+            playBtn.textContent = t('play');
+            return;
+        }
+
         if (this.config.whitelist_activate &&
             (!this.config.whitelist.includes(account.name) &&
-                !this.config.whitelist_roles.includes(account.user_info.role.name))) {
+                !this.config.whitelist_roles.includes(account.user_info?.role?.name))) {
             playBtn.style.backgroundColor = "#696969";
             playBtn.style.pointerEvents = "none";
             playBtn.style.boxShadow = "none";
@@ -109,6 +128,13 @@ class Login {
             const defaultBg = '../src/assets/images/background/light.jpg';
             let backgroundUrl = null;
 
+            // ===== MODIFICADO: Si es Microsoft, usar fondo por defecto =====
+            if (account.meta && account.meta.type === 'microsoft') {
+                backgroundUrl = defaultBg;
+                this.applyBackground(backgroundUrl, resolve, defaultBg);
+                return;
+            }
+
             if (this.config.role_data && account.user_info && account.user_info.role) {
                 for (const roleKey in this.config.role_data) {
                     if (this.config.role_data.hasOwnProperty(roleKey)) {
@@ -125,21 +151,23 @@ class Login {
             }
 
             const finalBgUrl = backgroundUrl || defaultBg;
-            const img = new Image();
-            img.onload = () => {
-                document.body.style.background = `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${finalBgUrl}) black no-repeat center center scroll`;
-                document.body.style.backgroundSize = 'cover';
-                resolve();
-            };
-
-            img.onerror = () => {
-                document.body.style.background = `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${defaultBg}) black no-repeat center center scroll`;
-                document.body.style.backgroundSize = 'cover';
-                resolve();
-            };
-
-            img.src = finalBgUrl;
+            this.applyBackground(finalBgUrl, resolve, defaultBg);
         });
+    }
+
+    applyBackground(url, resolve, defaultBg) {
+        const img = new Image();
+        img.onload = () => {
+            document.body.style.background = `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${url}) black no-repeat center center scroll`;
+            document.body.style.backgroundSize = 'cover';
+            resolve();
+        };
+        img.onerror = () => {
+            document.body.style.background = `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${defaultBg}) black no-repeat center center scroll`;
+            document.body.style.backgroundSize = 'cover';
+            resolve();
+        };
+        img.src = url;
     }
 
     getOnline() {
@@ -153,6 +181,67 @@ class Login {
 
         this.setupExternalLinks(azauth);
         this.setupEventListeners(elements, azauth);
+
+        // ===== NUEVO: Agregar listener para el botón de Microsoft =====
+        this.setupMicrosoftLogin();
+    }
+
+    // ===== NUEVO: Configurar el login con Microsoft =====
+    setupMicrosoftLogin() {
+        const msLoginBtn = document.getElementById('ms-login-btn');
+        if (!msLoginBtn) return;
+
+        msLoginBtn.addEventListener('click', async () => {
+            msLoginBtn.disabled = true;
+            msLoginBtn.textContent = 'Conectando...';
+
+            try {
+                const CLIENT_ID = '00000000402b5328'; // Client ID público de Microsoft
+                const profile = await ipcRenderer.invoke('Microsoft-window', CLIENT_ID);
+                // profile debería tener: { name, id (uuid), accessToken }
+
+                // Crear objeto de cuenta similar al de la web
+                const account = this.createMicrosoftAccount(profile);
+
+                // Guardar cuenta y cambiar a home
+                await this.saveAccount(account);
+
+                // Mostrar mensaje de éxito en el panel (opcional)
+                const msProfileInfo = document.getElementById('ms-profile-info');
+                if (msProfileInfo) {
+                    msProfileInfo.style.display = 'block';
+                    msProfileInfo.innerHTML = `✅ Sesión iniciada como <strong>${profile.name}</strong>`;
+                }
+
+            } catch (error) {
+                console.error('Error en login Microsoft:', error);
+                alert('Error al iniciar sesión con Microsoft: ' + error.message);
+            } finally {
+                msLoginBtn.disabled = false;
+                msLoginBtn.innerHTML = '<i class="fab fa-microsoft"></i> Iniciar sesión con Microsoft';
+            }
+        });
+    }
+
+    // ===== NUEVO: Crear objeto de cuenta para Microsoft =====
+    createMicrosoftAccount(profile) {
+        return {
+            access_token: profile.accessToken,
+            client_token: profile.id,
+            uuid: profile.id,
+            name: profile.name,
+            user_properties: {},
+            meta: {
+                type: 'microsoft',
+                offline: false // Es premium
+            },
+            user_info: {
+                // No tenemos role, money, verified de la web
+                role: null,
+                monnaie: null,
+                verified: true,
+            },
+        };
     }
 
     getElements() {

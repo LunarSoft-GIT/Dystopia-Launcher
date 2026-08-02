@@ -17,9 +17,9 @@
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
-        0 32px 64px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-        0 -20px 40px rgba(0, 0, 0, 0.2) inset;
+            0 32px 64px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+            0 -20px 40px rgba(0, 0, 0, 0.2) inset;
     text-align: center;
     animation: cardSlideIn 0.4s ease-out;
     overflow: hidden;
@@ -44,8 +44,8 @@
 .login-icon {
     font-size: 56px;
     background: linear-gradient(180deg,
-            var(--accent-color, #00bd7a) 0%,
-            var(--accent-color-dark, #00a066) 100%);
+    var(--accent-color, #00bd7a) 0%,
+    var(--accent-color-dark, #00a066) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -120,8 +120,8 @@
     border-color: var(--accent-color, #00bd7a);
     background: rgba(0, 0, 0, 0.4);
     box-shadow:
-        0 0 0 4px var(--accent-color-glow, rgba(0, 189, 122, 0.15)),
-        0 4px 12px rgba(0, 0, 0, 0.15) inset;
+            0 0 0 4px var(--accent-color-glow, rgba(0, 189, 122, 0.15)),
+            0 4px 12px rgba(0, 0, 0, 0.15) inset;
 }
 
 .login-input::placeholder {
@@ -158,16 +158,16 @@
     font-weight: 700;
     color: #0a0a0a;
     background: linear-gradient(180deg,
-            var(--accent-color, #00bd7a) 0%,
-            var(--accent-color-dark, #00a066) 100%);
+    var(--accent-color, #00bd7a) 0%,
+    var(--accent-color-dark, #00a066) 100%);
     border: none;
     border-radius: 14px;
     padding: 16px 24px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow:
-        0 6px 20px var(--accent-color-glow, rgba(0, 189, 122, 0.35)),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            0 6px 20px var(--accent-color-glow, rgba(0, 189, 122, 0.35)),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     margin-top: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -178,8 +178,8 @@
 .login-btn:hover {
     transform: translateY(-3px);
     box-shadow:
-        0 10px 30px var(--accent-color-glow, rgba(0, 189, 122, 0.45)),
-        0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+            0 10px 30px var(--accent-color-glow, rgba(0, 189, 122, 0.45)),
+            0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 
 .primary-btn:active,
@@ -230,8 +230,8 @@
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
-        0 32px 64px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            0 32px 64px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     text-align: center;
 }
 
@@ -250,8 +250,8 @@
     font-weight: 700;
     color: #0a0a0a;
     background: linear-gradient(180deg,
-            var(--accent-color, #00bd7a) 0%,
-            var(--accent-color-dark, #00a066) 100%);
+    var(--accent-color, #00bd7a) 0%,
+    var(--accent-color-dark, #00a066) 100%);
     border: none;
     border-radius: 14px;
     padding: 16px 24px;
@@ -275,16 +275,16 @@
     transform: translate(-50%, -50%);
     width: 420px;
     background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.08) 0%,
-            rgba(255, 255, 255, 0.02) 100%);
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     padding: 45px 40px;
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
-        0 32px 64px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            0 32px 64px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     text-align: center;
 }
 
@@ -325,9 +325,9 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.15) 50%,
-            transparent 100%);
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%);
     border-radius: 24px 24px 0 0;
 }
 
@@ -339,8 +339,91 @@
     width: 200%;
     height: 200%;
     background: radial-gradient(circle at 50% 0%,
-            var(--accent-color-glow, rgba(0, 189, 122, 0.08)) 0%,
-            transparent 50%);
+    var(--accent-color-glow, rgba(0, 189, 122, 0.08)) 0%,
+    transparent 50%);
     pointer-events: none;
     z-index: -1;
+}
+
+/* ============================================================
+   NUEVOS ESTILOS PARA PESTAÑAS Y PANELES (Fase 1)
+   ============================================================ */
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0 20px 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.tab {
+    padding: 8px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.tab:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.tab.active {
+    color: var(--accent-color, #00bd7a);
+    border-bottom-color: var(--accent-color, #00bd7a);
+}
+
+.panel {
+    display: block;
+}
+
+.panel.hidden {
+    display: none;
+}
+
+.ms-login-info {
+    text-align: center;
+    margin: 15px 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.ms-login-btn {
+    width: 100%;
+    padding: 14px;
+    background: #0078d4;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.ms-login-btn:hover {
+    background: #005a9e;
+    transform: translateY(-2px);
+}
+
+.ms-login-btn:active {
+    transform: translateY(0);
+}
+
+#ms-profile-info {
+    margin-top: 15px;
+    text-align: center;
+    color: var(--accent-color, #00bd7a);
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
+    display: none; /* Se muestra desde JS */
 }
