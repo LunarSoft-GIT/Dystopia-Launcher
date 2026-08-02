@@ -1,18 +1,26 @@
-# module du helios launcher
 name: Launcher Build
 on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Get version
-        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_ENV
       
       - name: Create Release
         id: create_release
@@ -28,22 +36,21 @@ jobs:
   build-launcher:
     needs: create-release
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [macos-14, ubuntu-latest, windows-2022]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.x
 
@@ -51,8 +58,8 @@ jobs:
         run: npm ci
         shell: bash
 
-      - name: Build
+      - name: Build and Publish
         env:
-          GH_TOKEN: ${{ secrets.github_token }}
-        run: npm run build
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build -- --publish always
         shell: bash
