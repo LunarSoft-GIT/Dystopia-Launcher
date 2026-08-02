@@ -87,6 +87,10 @@
     transition: var(--transition-smooth);
     cursor: pointer;
     box-shadow: 0 4px 15px var(--accent-color-subtle);
+    /* ===== NUEVO: Para skins de Minecraft (pixel art) ===== */
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 .player-head:hover {
@@ -135,18 +139,40 @@
     border-right-color: var(--border-accent);
 }
 
+/* ===== MODIFICADO: tooltip para cuentas Microsoft ===== */
+.player-tooltip .player-name {
+    font: 600 14px/1.3 'Poppins', sans-serif;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.player-tooltip-role {
+    font: 500 11px/1.3 'Poppins', sans-serif;
+    color: var(--text-secondary);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 2px;
+}
+
 .player-monnaie {
     font: 600 13px/1.4 'Poppins', sans-serif;
     color: var(--accent-color);
     text-shadow: 0 0 12px var(--accent-color-glow);
 }
 
-.player-tooltip-role {
-    font: 500 11px/1.3 'Poppins', sans-serif;
-    color: var(--text-primary);
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border-subtle);
-    margin-bottom: 2px;
+/* ===== NUEVO: Ocultar elementos vacíos en el tooltip ===== */
+.player-tooltip-role:empty,
+.player-monnaie:empty {
+    display: none !important;
+}
+
+/* ===== NUEVO: Ajustar tooltip cuando solo tiene nombre ===== */
+.player-tooltip:has(.player-tooltip-role:empty) .player-name {
+    margin-bottom: 0;
+}
+
+.player-tooltip:has(.player-monnaie:empty) .player-name {
+    margin-bottom: 0;
 }
 
 .player-role {
@@ -213,6 +239,14 @@
 .play-btn:active {
     transform: scale(0.98);
     box-shadow: 0 2px 12px var(--accent-color-glow);
+}
+
+/* ===== NUEVO: Estado deshabilitado del botón (whitelist) ===== */
+.play-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .download-content {
@@ -765,4 +799,49 @@ body::-webkit-scrollbar {
 
 .opacity-1 {
     opacity: 1;
+}
+
+/* ============================================================
+   ESTILOS ADICIONALES PARA CUENTAS MICROSOFT (Fase 3)
+   ============================================================ */
+
+/* Ocultar elementos vacíos en el tooltip */
+.player-tooltip-role:empty,
+.player-monnaie:empty {
+    display: none !important;
+}
+
+/* Ajustar tooltip cuando solo hay nombre */
+.player-tooltip:has(.player-tooltip-role:empty) .player-name {
+    margin-bottom: 0;
+}
+
+.player-tooltip:has(.player-monnaie:empty) .player-name {
+    margin-bottom: 0;
+}
+
+/* Asegurar que el avatar se vea bien con skins de Minecraft */
+.player-head {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* Botón de jugar deshabilitado por whitelist */
+.play-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Tooltip con nombre de usuario */
+.player-name {
+    font: 600 14px/1.3 'Poppins', sans-serif;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }

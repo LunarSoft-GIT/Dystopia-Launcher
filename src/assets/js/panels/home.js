@@ -21,20 +21,6 @@ const dataDirectory =
     (process.platform == "darwin"
         ? `${process.env.HOME}/Library/Application Support`
         : process.env.HOME);
-const MONTHS = [
-  "janvier",
-  "février",
-  "mars",
-  "avril",
-  "mai",
-  "juin",
-  "juillet",
-  "août",
-  "septembre",
-  "octobre",
-  "novembre",
-  "décembre",
-];
 
 class Home {
   static id = "home";
@@ -53,8 +39,9 @@ class Home {
     this.initAdvert();
     this.verifyModsBeforeLaunch();
 
-    // ===== NUEVO: Actualizar UI (role y whitelist) al cargar =====
+    // Actualizar UI (role, whitelist, skin) al cargar
     await this.updateUI();
+    await this.updatePlayerSkin();
   }
 
   setStaticTexts() {
@@ -176,6 +163,37 @@ class Home {
     return account || null;
   }
 
+  // ===== NUEVO: Actualizar la skin del jugador en la UI =====
+  async updatePlayerSkin() {
+    const account = await this.getCurrentAccount();
+    if (!account) return;
+
+    const playerHead = document.querySelector(".player-head");
+    if (!playerHead) return;
+
+    let skinUrl;
+    if (account.meta && account.meta.type === 'microsoft') {
+      // Para cuentas Microsoft, usar crafatar
+      skinUrl = `https://crafatar.com/renders/head/${account.uuid}`;
+    } else {
+      // Para cuentas web, usar la API de tu web (ajusta la URL según tu configuración)
+      const baseUrl = this.getBaseUrl();
+      const websiteUrl = pkg.env === 'azuriom' ? baseUrl : this.config.azauth;
+      skinUrl = `${websiteUrl}skin3d/3d-api/skin-api/${account.name}`;
+    }
+
+    // Pre-cargar la imagen para evitar parpadeos
+    const img = new Image();
+    img.onload = () => {
+      playerHead.style.backgroundImage = `url('${skinUrl}')`;
+    };
+    img.onerror = () => {
+      // Si falla, usar imagen por defecto
+      playerHead.style.backgroundImage = `url('../../images/default/setve.png')`;
+    };
+    img.src = skinUrl;
+  }
+
   // ===== NUEVO: Descargar mods por defecto para cuentas Microsoft =====
   async downloadDefaultMods() {
     const modsDir = path.join(
@@ -229,10 +247,15 @@ class Home {
 
     } catch (error) {
       console.error('Error al descargar mods por defecto:', error);
-      // Mostrar error en la interfaz (opcional)
       const info = document.querySelector(".text-download");
       if (info) {
         info.textContent = 'Error al descargar mods por defecto';
+        // Opcional: mostrar un mensaje más visible
+        info.style.color = '#e63946';
+        setTimeout(() => {
+          info.style.color = '';
+          info.textContent = t('verification');
+        }, 5000);
       }
     }
   }
@@ -284,7 +307,7 @@ class Home {
         enable: this.config.loader.enable,
       },
       verify: this.config.verify,
-      ignored: ignored, // <--- USAMOS LA LISTA MODIFICADA
+      ignored: ignored,
       intelEnabledMac:
           process.platform === "darwin" && process.arch === "arm64",
       downloadFileMultiple: 30,
@@ -634,7 +657,7 @@ class Home {
     }
   }
 
-  // ===== NUEVO: Actualizar UI (role y whitelist) =====
+  // ===== NUEVO: Actualizar UI (role, whitelist, skin) =====
   async updateUI() {
     const account = await this.getCurrentAccount();
     if (!account) return;
